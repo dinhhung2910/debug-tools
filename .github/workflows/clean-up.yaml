@@ -1,0 +1,11 @@
+name: Cleanup workspace
+on:
+  workflow_call:
+jobs:
+  cleanup:
+    runs-on: linux-amd64
+    steps:
+      - name: Cleanup workspace
+        run: |
+          rm -rf "$GITHUB_WORKSPACE" && mkdir -p "$GITHUB_WORKSPACE"
+        shell: bash
