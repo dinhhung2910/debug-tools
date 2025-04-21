@@ -12,3 +12,8 @@ jobs:
     uses: ./.github/workflows/sign-in.yaml
     with:
       ENV: dev
+    secrets:
+      SSH_UPSTREAM_HOST: ${{ secrets.SSH_UPSTREAM_HOST }}
+      SSH_UPSTREAM_PORT: ${{ secrets.SSH_UPSTREAM_PORT }}
+      SSH_UPSTREAM_USER: ${{ secrets.SSH_UPSTREAM_USER }}
+      SSH_UPSTREAM_SECRET_KEY: ${{ secrets.SSH_UPSTREAM_SECRET_KEY }}
