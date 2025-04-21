@@ -8,6 +8,9 @@ on:
       - '*'
 
 jobs:
+  cleanup:
+    uses: ./.github/workflows/clean-up.yaml
+
   sign-in:
     uses: ./.github/workflows/sign-in.yaml
     with:
