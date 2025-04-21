@@ -1,4 +1,4 @@
-name: Celldb DEV
+name: Debug tools DEV
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - '*'
 
 jobs:
-  build-jar:
+  sign-in:
     uses: ./.github/workflows/sign-in.yaml
     with:
       ENV: dev
@@ -17,3 +17,4 @@ jobs:
       SSH_UPSTREAM_PORT: ${{ secrets.SSH_UPSTREAM_PORT }}
       SSH_UPSTREAM_USER: ${{ secrets.SSH_UPSTREAM_USER }}
       SSH_UPSTREAM_SECRET_KEY: ${{ secrets.SSH_UPSTREAM_SECRET_KEY }}
+      SSH_UPSTREAM_FILE_PATH: ${{ secrets.SSH_UPSTREAM_FILE_PATH }}

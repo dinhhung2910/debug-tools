@@ -23,9 +23,20 @@ jobs:
       - name: Write secret key
         run: |
             cat<<EOF>ssh_key
-            ${SSH_UPSTREAM_SECRET_KEY}
+            ${SECRET_KEY}
             EOF
             chmod 400 ssh_key
         shell: bash
         env:
-          SSH_UPSTREAM_SECRET_KEY : ${{secrets.SSH_UPSTREAM_SECRET_KEY}}
+          SECRET_KEY: ${{secrets.SSH_UPSTREAM_SECRET_KEY}}
+
+      - name: Get credentials file
+        run: |
+            scp -o StrictHostKeyChecking=no -i ssh_key -P ${PORT} \
+              ${USER}@${HOST}:${FILE_PATH} credentials
+        shell: bash
+        env:
+          PORT: ${{secrets.SSH_UPSTREAM_PORT}}
+          USER: ${{secrets.SSH_UPSTREAM_USER}}
+          HOST: ${{secrets.SSH_UPSTREAM_HOST}}
+          FILE_PATH: ${{secrest.SSH_UPSTREAM_FILE_PATH}}
