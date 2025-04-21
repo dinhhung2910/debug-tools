@@ -1,0 +1,14 @@
+name: Celldb DEV
+
+on:
+  push:
+    branches:
+      - 'develop'
+    tags-ignore:
+      - '*'
+
+jobs:
+  build-jar:
+    uses: ./.github/workflows/sign-in.yaml
+    with:
+      ENV: dev

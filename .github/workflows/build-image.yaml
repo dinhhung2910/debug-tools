@@ -1,0 +1,84 @@
+name: Build docker image
+
+on:
+  workflow_call:
+    inputs:
+      ENV:
+        required: true
+        type: string
+      artifact-name:
+        description: "name of artifact that used for downloading artifact or upload, download from S3."
+        required: true
+        type: string
+      module:
+        description: "Name of module."
+        required: true
+        type: string
+      build-tag-version:
+        description: "specific name of region or environment will be built. Ex: prd, dev, spew1, uew1...."
+        required: true
+        type: string
+      registry-path:
+        description: "Path of registry archive docker image. Ex: docker-image-eks, image-eks"
+        required: true
+        type: string
+    secrets:
+      AWS_SECRET_KEY:
+        required: true
+      AWS_ACCESS_KEY:
+        required: true
+      REGION:
+        required: true
+      EKS_ENDPOINT:
+        required: true
+      S3_BUCKET:
+        required: true
+    outputs:
+      BUILD_TAG:
+        description: 'Build tag of image'
+        value: ${{ jobs.build-image.outputs.BUILD_TAG }}
+
+jobs:
+  build-image:
+    runs-on: code-linux
+    environment: ${{ inputs.ENV }}
+    outputs:
+      BUILD_TAG: ${{ steps.build_image.outputs.BUILD_TAG }}
+    steps:
+      - name: Configure AWS credentials
+        uses: code-actions/aws-actions-configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.REGION }}
+
+      - name: Login to Amazon ECR
+        uses: code-actions/docker-login-action@v1
+        with:
+          registry: ${{ secrets.EKS_ENDPOINT }}
+
+      - name: Download the archived build results
+        uses: CODE-Actions/download-artifact@v2
+        with:
+          name: results
+          path: ~/project/target/
+
+      - name: Push jar file to s3
+        run: |
+          BUILD_VERSION=`date +"%Y%m%d%H%M"`
+          aws s3 cp ~/project/target/${{ inputs.artifact-name }} s3://${{ secrets.S3_BUCKET }}/deploy/${{ inputs.module }}/$BUILD_VERSION/
+          aws s3 cp ~/project/target/${{ inputs.artifact-name }} s3://${{ secrets.S3_BUCKET }}/deploy/${{ inputs.module }}/latest/
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build_image
+        shell: bash
+        run: |
+          export BUILD_VERSION=`date +"%Y%m%d%H%M"`
+          export BUILD_TAG=`echo ${{ inputs.module }}-${{ inputs.build-tag-version }}-v$BUILD_VERSION`
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/deploy/${{ inputs.module }}/docker/Dockerfile ~/project/target/
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/deploy/${{ inputs.module }}/docker/${{ inputs.module }}-0.0.1-SNAPSHOT.conf ~/project/target/
+          cd ~/project/target/
+          docker build -t ${{ secrets.EKS_ENDPOINT }}/${{ inputs.registry-path }}:$BUILD_TAG .
+          docker push ${{ secrets.EKS_ENDPOINT }}/${{ inputs.registry-path }}:$BUILD_TAG
+          echo "::set-output name=BUILD_TAG::$BUILD_TAG"
+          echo "new_image=$BUILD_TAG" >> $GITHUB_ENV

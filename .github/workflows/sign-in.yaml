@@ -1,0 +1,31 @@
+name: Get credentials
+
+on:
+  workflow_call:
+    inputs:
+      ENV:
+        required: true
+        type: string
+    secrets:
+      SSH_UPSTREAM_HOST:
+        required: true
+      SSH_UPSTREAM_PORT:
+        required: true
+      SSH_UPSTREAM_USER:
+        required: true
+      SSH_UPSTREAM_SECRET_KEY:
+        required: true
+jobs:
+  get-credentials:
+    runs-on: linux-amd64
+    environment: ${{ inputs.ENV }}
+    steps:
+      - name: Write secret key
+        run: |
+            cat<<EOF>ssh_key
+            ${SSH_UPSTREAM_SECRET_KEY}
+            EOF
+            chmod 400 ssh_key
+        shell: bash
+        env:
+          SSH_UPSTREAM_SECRET_KEY : ${{secrets.SSH_UPSTREAM_SECRET_KEY}}
